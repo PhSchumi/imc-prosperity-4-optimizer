@@ -9,9 +9,9 @@ import tempfile
 import platform
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable, Generator, Optional, Set, Dict, List, Union, Tuple
+from typing import Callable, Generator, Optional, Set, Dict, List, Union, Tuple, Any
 
-from optuna import Trial, TrialPruned
+from optuna import Trial, TrialPruned, Study
 from optuna.distributions import CategoricalChoiceType
 
 # Windows-compatible file locking
@@ -51,9 +51,10 @@ class ObjectiveRunner:
         self._temp_dir = temp_dir
         self._days = days
         self._backtester_args = backtester_args
+        self._original_algorithm_file = algorithm_file  # Store original for output
 
-        self.params = Dict[str, Callable[[Trial], CategoricalChoiceType]]()
-        self.param_definitions = Dict[str, str]()
+        self.params = dict[str, Callable[[Trial], CategoricalChoiceType]]()
+        self.param_definitions = dict[str, str]()
 
         self._algorithm_file = self._process_algorithm_file(algorithm_file)
 
@@ -77,20 +78,29 @@ class ObjectiveRunner:
                 datamodel_copied = True
                 break
 
+        # If not found locally, try to get from prosperity4bt package
+        if not datamodel_copied:
+            try:
+                import prosperity4bt.datamodel as dm
+                import os
+                datamodel_src = Path(dm.__file__)
+                if datamodel_src.exists():
+                    shutil.copyfile(datamodel_src, self._temp_dir / "datamodel.py")
+                    datamodel_copied = True
+            except ImportError:
+                pass
+
         if not datamodel_copied:
             print("Warning: datamodel.py not found, algorithm may fail if it depends on it")
 
         output_file = self._temp_dir / "algorithm.py"
 
         with algorithm_file.open("r", encoding="utf-8") as fin, output_file.open("w+", encoding="utf-8") as fout:
-            fout.write(
-            """
-            import json as prosperity4opt_json
-            import os as prosperity4opt_os
-            prosperity4opt_params = prosperity4opt_json.loads(prosperity4opt_os.environ["PROSPERITY4OPT_PARAMS"])
-            """.strip()
-            )
-            fout.write("\n\n")
+            fout.write("""import json as prosperity4opt_json
+import os as prosperity4opt_os
+prosperity4opt_params = prosperity4opt_json.loads(prosperity4opt_os.environ["PROSPERITY4OPT_PARAMS"])
+
+""")
 
             pattern = re.compile(r"^\s*([^ ]+)\s*=\s*(.*?)\s*#\s*opt:\s*((categorical|float|int).*)\s*$")
 
@@ -146,7 +156,7 @@ class ObjectiveRunner:
 
         try:
             # Load existing seen params
-            seen = Set[str]()
+            seen = set()
             if self._seen_file.exists():
                 with open(self._seen_file, 'r') as f:
                     seen = set(json.load(f))
@@ -259,3 +269,41 @@ class ObjectiveRunner:
             return (profit_value, risk_value)
 
         return profit_value
+
+    def save_optimized_algorithm(self, output_path: Path, best_params: Dict[str, Any]) -> None:
+        """Save the algorithm file with optimized parameters baked in."""
+        # Read the original algorithm file (not the modified temp one)
+        with self._original_algorithm_file.open("r", encoding="utf-8") as f:
+            original_lines = f.readlines()
+
+        # Process each line, replacing optimized parameters
+        output_lines = []
+        for line in original_lines:
+            # Check if this line has an # opt: annotation
+            match = re.match(r"^(\s*)([^ ]+)\s*=\s*(.*?)\s*#\s*opt:.*$", line)
+            if match:
+                indent, var_name, _ = match.groups()
+                # Use var_name directly as the param name (they match)
+                if var_name in best_params:
+                    value = best_params[var_name]
+                    # Format the value appropriately
+                    if isinstance(value, float):
+                        # Check if it's essentially an integer
+                        if value == int(value):
+                            formatted_value = str(int(value))
+                        else:
+                            formatted_value = f"{value:.3f}".rstrip('0').rstrip('.')
+                    else:
+                        formatted_value = str(value)
+                    # Write the line with the optimized value
+                    output_lines.append(f'{indent}{var_name} = {formatted_value}\n')
+                else:
+                    output_lines.append(line)
+            else:
+                output_lines.append(line)
+
+        # Write to output file
+        with output_path.open("w", encoding="utf-8") as f:
+            f.writelines(output_lines)
+
+        print(f"\nOptimized algorithm saved to: {output_path}")

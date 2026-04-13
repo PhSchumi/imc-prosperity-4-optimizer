@@ -20,7 +20,7 @@ dependencies = [
     "gunicorn>=23.0.0",
     "numpy>=2.0.2",
     "typer>=0.15.2",
-    "prosperity4bt>=0.11.0",
+    "prosperity4bt",
     "tqdm>=4.67.1",
 ]
 

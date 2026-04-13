@@ -58,14 +58,21 @@ def cli(
                         help="The days to backtest on. <round>-<day> for a single day, <round> for all days in a round.", 
                         show_default=False
                         )],
-    out: Annotated[Path, 
-                   Option(help="Path to save optimization results to.", 
-                          show_default=False, 
-                          dir_okay=False, 
+    out: Annotated[Path,
+                   Option(help="Path to save optimization results to.",
+                          show_default=False,
+                          dir_okay=False,
                           resolve_path=True)] = Path("prosperity4opt.log"),
-    no_out: Annotated[bool, 
-                      Option("--no-out", 
+    no_out: Annotated[bool,
+                      Option("--no-out",
                              help="Skip saving optimization results.")] = False,
+    output_algo: Annotated[Optional[Path],
+                          Option(
+                              "--output-algo",
+                              help="Path to save algorithm file with best parameters (e.g., best_algo.py). If not specified, no file is saved.",
+                              show_default=False,
+                              dir_okay=False,
+                              resolve_path=True)] = None,
     jobs: Annotated[int, 
                     Option(help="Number of backtests to run in parallel (-1 to use number of CPU cores).")] = -1,
     minimize: Annotated[bool,
@@ -223,11 +230,23 @@ def cli(
                 except Exception as e:
                     print(f"Could not compute hyperparameter importance: {e}")
 
-            print("\n" + "=" * 60)
-            if not no_out:
-                print(f"Results saved to: {out}")
-                print("Run 'optuna-dashboard {}' to visualize".format(out))
-            print("=" * 60)
+        # Save optimized algorithm file if requested
+        if output_algo is not None:
+            try:
+                if multi_objective is not None:
+                    # For multi-objective, use the best trial from Pareto front
+                    best_params = study.best_trials[0].params
+                else:
+                    best_params = study.best_params
+                runner.save_optimized_algorithm(output_algo, best_params)
+            except Exception as e:
+                print(f"\nWarning: Could not save optimized algorithm: {e}")
+
+        print("\n" + "=" * 60)
+        if not no_out:
+            print(f"Results saved to: {out}")
+            print("Run 'optuna-dashboard {}' to visualize".format(out))
+        print("=" * 60)
 
 
 def main() -> None:
