@@ -1,6 +1,6 @@
 [project]
-name = "prosperity3opt"
-description = "Hyperparameter optimizer for IMC Prosperity 3 algorithms"
+name = "prosperity4opt"
+description = "Hyperparameter optimizer for IMC Prosperity 4 algorithms"
 version = "0.0.0"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -20,7 +20,7 @@ dependencies = [
     "gunicorn>=23.0.0",
     "numpy>=2.0.2",
     "typer>=0.15.2",
-    "prosperity3bt>=0.11.0",
+    "prosperity4bt>=0.11.0",
     "tqdm>=4.67.1",
 ]
 
@@ -29,15 +29,15 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-prosperity3opt = "prosperity3opt.__main__:main"
+prosperity4opt = "prosperity4opt.__main__:main"
 
 [project.urls]
-Repository = "https://github.com/jmerle/imc-prosperity-3-optimizer"
-Issues = "https://github.com/jmerle/imc-prosperity-3-optimizer/issues"
-Changelog = "https://github.com/jmerle/imc-prosperity-3-optimizer/releases"
+Repository = "https://github.com/PhSchumi/imc-prosperity-4-optimizer"
+Issues = "https://github.com/PhSchumi/imc-prosperity-4-optimizer/issues"
+Changelog = "https://github.com/PhSchumi/imc-prosperity-4-optimizer/releases"
 
 [tool.setuptools.packages.find]
-include = ["prosperity3opt", "prosperity3opt.*"]
+include = ["prosperity4opt", "prosperity4opt.*"]
 
 [tool.uv]
 dev-dependencies = [

@@ -11,7 +11,7 @@ from optuna.distributions import (
     IntDistribution,
 )
 
-from prosperity3opt.objective import ObjectiveRunner
+from prosperity4opt.objective import ObjectiveRunner
 
 
 def get_possible_values(d: BaseDistribution) -> list[CategoricalChoiceType]:
@@ -31,8 +31,9 @@ def get_possible_values(d: BaseDistribution) -> list[CategoricalChoiceType]:
 
 
 def get_grid_search_space(runner: ObjectiveRunner) -> dict[str, list[CategoricalChoiceType]]:
+    # Use public API instead of internal storage access
     study = optuna.create_study(study_name="extracting-distributions")
-    trial = Trial(study, study._storage.create_new_trial(study._study_id))
+    trial = study.ask()  # Public API to create a trial
 
     space = {}
     for name, func in runner.params.items():

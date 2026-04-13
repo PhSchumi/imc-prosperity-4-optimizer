@@ -1,21 +1,18 @@
 # Important
 
-This is an unfinished project I started during the tutorial round of Prosperity 3 with the intention of open-sourcing it, but I didn't get it to a state where I was comfortable with doing so. It's in a usable state, I used it for some rounds, but it's a bit rough around the edges, partially undocumented, and lacking some key optimizations. Below you can find the readme in the state it was at the end of the competition, with no guarantees about its correctness.
+This is an unfinished project adapted from the Prosperity 3 optimizer. It's in a usable state but may need adjustments for Prosperity 4-specific features. Use at your own risk.
 
 ---
 
-# IMC Prosperity 3 Optimizer
-
-[![Build Status](https://github.com/jmerle/imc-prosperity-3-optimizer/workflows/Build/badge.svg)](https://github.com/jmerle/imc-prosperity-3-optimizer/actions/workflows/build.yml)
-[![PyPI Version](https://img.shields.io/pypi/v/prosperity3opt)](https://pypi.org/project/prosperity3opt/)
+# IMC Prosperity 4 Optimizer
 
 **Warning: overfitting your hyperparameters on training data may lead to unexpected results on the test data. Use at your own risk.**
 
-This repository contains a hyperparameter optimizer for [IMC Prosperity 3](https://prosperity.imc.com/) algorithms, based on [Optuna](https://optuna.org/) and my [Prosperity 3 backtester](https://github.com/jmerle/imc-prosperity-3-backtester).
+This repository contains a hyperparameter optimizer for [IMC Prosperity 4](https://prosperity.imc.com/) algorithms, based on [Optuna](https://optuna.org/) and the Prosperity 4 backtester.
 
 ## Usage
 
-Run `pip install -U prosperity3opt` to install or update the optimizer.
+Run `pip install -U prosperity4opt` to install or update the optimizer.
 
 Hyperparameters that need to be optimized must be annotated in your code like this:
 ```python
@@ -42,23 +39,27 @@ The name of the hyperparameter (i.e. the `name` in Optuna's `trial.suggest_*(nam
 After annotating your hyperparameters you can run the optimizer like you run a backtest:
 ```sh
 # Optimize on all days from round 1
-$ prosperity3opt example/starter.py 1
+$ prosperity4opt example/starter.py 1
 
 # Optimize on round 1 day 0
-$ prosperity3opt example/starter.py 1-0
+$ prosperity4opt example/starter.py 1-0
 
 # Optimize on round 1 day -1 and round 1 day 0
-$ prosperity3opt example/starter.py 1--1 1-0
+$ prosperity4opt example/starter.py 1--1 1-0
 
 # Optimize on all days from rounds 1 and 2
-$ prosperity3opt example/starter.py 1 2
+$ prosperity4opt example/starter.py 1 2
 
 # You get the idea
 ```
 
-You can find all available options by running `prosperity3opt --help`.
+You can find all available options by running `prosperity4opt --help`.
 
-During and after performing an optimization you can run `optuna-dashboard prosperity3opt.log` to visualize the results in the [Optuna Dashboard](https://optuna-dashboard.readthedocs.io/en/latest/getting-started.html) (which is automatically installed when you install the optimizer).
+### New Options for Prosperity 4
+
+- `--metric`: Choose optimization metric: `min` (worst day's profit, default), `sum` (total profit), or `mean` (average profit)
+
+During and after performing an optimization you can run `optuna-dashboard prosperity4opt.log` to visualize the results in the [Optuna Dashboard](https://optuna-dashboard.readthedocs.io/en/latest/getting-started.html) (which is automatically installed when you install the optimizer).
 
 ## Grid Search
 
@@ -66,10 +67,10 @@ By default the optimizer uses Optuna's [tree-structured Parzen Estimator sampler
 
 ## Development
 
-Follow these steps if you want to make changes to the backtester:
+Follow these steps if you want to make changes to the optimizer:
 1. Install [uv](https://docs.astral.sh/uv/).
 2. Clone (or fork and clone) this repository.
 3. Open a terminal in your clone of the repository.
 4. Create a venv with `uv venv` and activate it.
 5. Run `uv sync`.
-6. Any changes you make are now automatically taken into account the next time you run `prosperity3opt` inside the venv.
+6. Any changes you make are now automatically taken into account the next time you run `prosperity4opt` inside the venv.
